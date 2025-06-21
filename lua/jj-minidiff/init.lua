@@ -230,7 +230,9 @@ JJ.jj_invalidate_cache = function(cache)
 	pcall(vim.loop.timer_stop, cache.timer)
 end
 
-local jj = function()
+JJ.setup = function(config)
+  JJ.config = config or {}
+
 	local attach = function(buf_id)
 		-- Try attaching to a buffer only once
 		if JJ.jj_cache[buf_id] ~= nil then
@@ -271,11 +273,5 @@ local jj = function()
 		apply_hunks = apply_hunks,
 	}
 end
-
-JJ.setup = function(config)
-  JJ.config = config or {}
-end
-
-JJ.setup()
 
 return JJ
