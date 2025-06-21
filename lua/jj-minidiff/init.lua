@@ -272,4 +272,10 @@ local jj = function()
 	}
 end
 
+JJ.setup = function(config)
+  JJ.config = config or {}
+end
+
+JJ.setup()
+
 return JJ
