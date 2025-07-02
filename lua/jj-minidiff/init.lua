@@ -32,7 +32,7 @@ JJ.get_buftext = function(buf_id)
 	return bytes .. text, lines
 end
 
-JJ.jj_start_watching_tree_state = function(buf_id, path)
+JJ.jj_start_watching_working_copy = function(buf_id, path)
 	local stdout = vim.loop.new_pipe()
 	local args = { "workspace", "root" }
 	local spawn_opts = {
@@ -61,7 +61,7 @@ JJ.jj_start_watching_tree_state = function(buf_id, path)
 
 		-- Set up index watching
 		local jj_dir_path = table.concat(stdout_feed, ""):gsub("\n+$", "") .. "/.jj/working_copy"
-		JJ.jj_setup_tree_state_watch(buf_id, jj_dir_path)
+		JJ.jj_setup_working_copy_watch(buf_id, jj_dir_path)
 
 		-- Set reference text immediately
 		JJ.jj_set_ref_text(buf_id)
@@ -71,21 +71,21 @@ JJ.jj_start_watching_tree_state = function(buf_id, path)
 	JJ.jj_read_stream(stdout, stdout_feed)
 end
 
-JJ.jj_setup_tree_state_watch = function(buf_id, jj_dir_path)
+JJ.jj_setup_working_copy_watch = function(buf_id, jj_dir_path)
 	local buf_fs_event, timer = vim.loop.new_fs_event(), vim.loop.new_timer()
 	local buf_jj_set_ref_text = function()
 		JJ.jj_set_ref_text(buf_id)
 	end
 
-	local watch_tree_state = function(_, filename, _)
-		if filename ~= "tree_state" then
+	local watch_working_copy = function(_, filename, _)
+		if filename ~= "checkout" then
 			return
 		end
 		-- Debounce to not overload during incremental staging (like in script)
 		timer:stop()
 		timer:start(50, 0, buf_jj_set_ref_text)
 	end
-	buf_fs_event:start(jj_dir_path, { recursive = false }, watch_tree_state)
+	buf_fs_event:start(jj_dir_path, { recursive = false }, watch_working_copy)
 
 	JJ.jj_invalidate_cache(JJ.jj_cache[buf_id])
 	JJ.jj_cache[buf_id] = { fs_event = buf_fs_event, timer = timer }
@@ -245,7 +245,7 @@ JJ.setup = function(config)
 		end
 
 		JJ.jj_cache[buf_id] = {}
-		JJ.jj_start_watching_tree_state(buf_id, path)
+		JJ.jj_start_watching_working_copy(buf_id, path)
 	end
 
 	local detach = function(buf_id)
